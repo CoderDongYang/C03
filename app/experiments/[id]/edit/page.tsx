@@ -5,31 +5,16 @@ import { prisma } from "@/lib/prisma";
 import DashboardLayout from "@/components/dashboard-layout";
 import NewExperimentForm from "@/components/new-experiment-form";
 
-interface EditExperimentPageProps {
-  params: { id: string };
-}
-
-export default async function EditExperimentPage({
-  params,
-}: EditExperimentPageProps) {
+export default async function EditExperimentPage({ params }: { params: { id: string } }) {
   const session = await getServerSession(authOptions);
-
-  if (!session) {
-    redirect("/login");
-  }
+  if (!session) redirect("/login");
 
   const experiment = await prisma.experiment.findFirst({
     where: { id: params.id, userId: session.user.id },
-    include: {
-      versions: {
-        orderBy: { createdAt: "asc" },
-      },
-    },
+    include: { versions: { orderBy: { createdAt: "asc" } } },
   });
 
-  if (!experiment) {
-    redirect("/dashboard");
-  }
+  if (!experiment) redirect("/dashboard");
 
   const initialData = {
     id: experiment.id,
@@ -38,7 +23,7 @@ export default async function EditExperimentPage({
     targetEvent: experiment.targetEvent,
     description: experiment.description,
     status: experiment.status,
-    versions: experiment.versions.map((v) => ({
+    versions: experiment.versions.map((v: any) => ({
       id: v.id,
       name: v.name,
       weight: v.weight,

@@ -15,10 +15,12 @@ export async function POST(req: Request) {
     const body = await req.json();
     const validated = exposureSchema.parse(body);
 
-    const existing = await prisma.exposure.findFirst({
+    const existing = await prisma.exposure.findUnique({
       where: {
-        experimentId: validated.experimentId,
-        visitorId: validated.visitorId,
+        experimentId_visitorId: {
+          experimentId: validated.experimentId,
+          visitorId: validated.visitorId,
+        },
       },
     });
 
@@ -38,7 +40,7 @@ export async function POST(req: Request) {
   } catch (error) {
     if (error instanceof z.ZodError) {
       return NextResponse.json(
-        { error: error.errors[0].message },
+        { error: error.issues[0].message },
         { status: 400 }
       );
     }

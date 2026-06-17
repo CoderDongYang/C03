@@ -6,11 +6,9 @@ import ExperimentList from "@/components/experiment-list";
 
 export default async function DashboardPage() {
   const session = await getServerSession(authOptions);
-
   if (!session) {
     redirect("/login");
   }
-
   return (
     <DashboardLayout>
       <ExperimentList />

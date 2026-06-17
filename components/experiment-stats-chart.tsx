@@ -1,45 +1,11 @@
 "use client";
 
-import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  Legend,
-  ResponsiveContainer,
-  LineChart,
-  Line,
-} from "recharts";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ExperimentStats } from "@/types";
 
-interface ExperimentStatsChartProps {
-  stats: ExperimentStats;
-  loading?: boolean;
-}
-
-export default function ExperimentStatsChart({
-  stats,
-  loading = false,
-}: ExperimentStatsChartProps) {
-  if (loading) {
-    return (
-      <Card>
-        <CardHeader>
-          <CardTitle>数据报表</CardTitle>
-          <CardDescription>加载中...</CardDescription>
-        </CardHeader>
-      </Card>
-    );
-  }
+export default function ExperimentStatsChart({ stats, loading }: { stats: ExperimentStats; loading?: boolean }) {
+  if (loading) return <Card><CardHeader><CardTitle>数据报表</CardTitle><CardDescription>加载中...</CardDescription></CardHeader></Card>;
 
   const chartData = stats.versions.map((v) => ({
     name: v.versionName + (v.isControl ? " (对照)" : ""),
@@ -65,21 +31,15 @@ export default function ExperimentStatsChart({
           <div className="grid gap-4 md:grid-cols-3">
             <div className="text-center p-4 bg-muted/30 rounded-lg">
               <p className="text-sm text-muted-foreground">总曝光量</p>
-              <p className="text-3xl font-bold mt-1">
-                {stats.stats.totalExposures.toLocaleString()}
-              </p>
+              <p className="text-3xl font-bold mt-1">{stats.stats.totalExposures.toLocaleString()}</p>
             </div>
             <div className="text-center p-4 bg-muted/30 rounded-lg">
               <p className="text-sm text-muted-foreground">总转化量</p>
-              <p className="text-3xl font-bold mt-1">
-                {stats.stats.totalConversions.toLocaleString()}
-              </p>
+              <p className="text-3xl font-bold mt-1">{stats.stats.totalConversions.toLocaleString()}</p>
             </div>
             <div className="text-center p-4 bg-muted/30 rounded-lg">
               <p className="text-sm text-muted-foreground">整体转化率</p>
-              <p className="text-3xl font-bold mt-1">
-                {stats.stats.overallConversionRate}%
-              </p>
+              <p className="text-3xl font-bold mt-1">{stats.stats.overallConversionRate}%</p>
             </div>
           </div>
         </CardContent>
@@ -110,7 +70,7 @@ export default function ExperimentStatsChart({
       <Card>
         <CardHeader>
           <CardTitle>转化率对比</CardTitle>
-          <CardDescription>各版本转化率及提升幅度</CardDescription>
+          <CardDescription>各版本转化率</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="h-80">
@@ -118,13 +78,9 @@ export default function ExperimentStatsChart({
               <BarChart data={conversionRateData}>
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="name" />
-                <YAxis label={{ value: "转化率 (%)", angle: -90, position: "insideLeft" }} />
-                <Tooltip formatter={(value: number) => [`${value}%`, "转化率"]} />
-                <Bar
-                  dataKey="转化率"
-                  fill="hsl(var(--primary))"
-                  radius={[4, 4, 0, 0]}
-                />
+                <YAxis />
+                <Tooltip />
+                <Bar dataKey="转化率" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </div>
@@ -154,31 +110,13 @@ export default function ExperimentStatsChart({
                     <td className="py-3 px-4">
                       <span className="flex items-center gap-2">
                         {version.versionName}
-                        {version.isControl && (
-                          <span className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded-full">
-                            对照组
-                          </span>
-                        )}
+                        {version.isControl && <span className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded-full">对照组</span>}
                       </span>
                     </td>
-                    <td className="text-right py-3 px-4">
-                      {version.exposures.toLocaleString()}
-                    </td>
-                    <td className="text-right py-3 px-4">
-                      {version.conversions.toLocaleString()}
-                    </td>
-                    <td className="text-right py-3 px-4">
-                      {version.conversionRate}%
-                    </td>
-                    <td
-                      className={`text-right py-3 px-4 font-medium ${
-                        version.lift > 0
-                          ? "text-green-600"
-                          : version.lift < 0
-                          ? "text-red-600"
-                          : "text-muted-foreground"
-                      }`}
-                    >
+                    <td className="text-right py-3 px-4">{version.exposures.toLocaleString()}</td>
+                    <td className="text-right py-3 px-4">{version.conversions.toLocaleString()}</td>
+                    <td className="text-right py-3 px-4">{version.conversionRate}%</td>
+                    <td className={`text-right py-3 px-4 font-medium ${version.lift > 0 ? "text-green-600" : version.lift < 0 ? "text-red-600" : "text-muted-foreground"}`}>
                       {version.isControl ? "-" : `${version.lift > 0 ? "+" : ""}${version.lift}%`}
                     </td>
                   </tr>

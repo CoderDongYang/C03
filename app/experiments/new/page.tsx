@@ -6,11 +6,7 @@ import NewExperimentForm from "@/components/new-experiment-form";
 
 export default async function NewExperimentPage() {
   const session = await getServerSession(authOptions);
-
-  if (!session) {
-    redirect("/login");
-  }
-
+  if (!session) redirect("/login");
   return (
     <DashboardLayout>
       <NewExperimentForm />
