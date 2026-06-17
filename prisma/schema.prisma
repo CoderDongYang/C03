@@ -110,9 +110,9 @@ model Exposure {
   version      Version    @relation(fields: [versionId], references: [id], onDelete: Cascade)
   createdAt    DateTime   @default(now())
 
+  @@unique([experimentId, visitorId])
   @@index([experimentId])
   @@index([versionId])
-  @@index([visitorId])
 }
 
 model Conversion {

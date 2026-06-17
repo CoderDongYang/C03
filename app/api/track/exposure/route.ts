@@ -15,6 +15,17 @@ export async function POST(req: Request) {
     const body = await req.json();
     const validated = exposureSchema.parse(body);
 
+    const existing = await prisma.exposure.findFirst({
+      where: {
+        experimentId: validated.experimentId,
+        visitorId: validated.visitorId,
+      },
+    });
+
+    if (existing) {
+      return NextResponse.json({ success: true, duplicated: true });
+    }
+
     await prisma.exposure.create({
       data: {
         experimentId: validated.experimentId,
@@ -23,7 +34,7 @@ export async function POST(req: Request) {
       },
     });
 
-    return NextResponse.json({ success: true });
+    return NextResponse.json({ success: true, duplicated: false });
   } catch (error) {
     if (error instanceof z.ZodError) {
       return NextResponse.json(

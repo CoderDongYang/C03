@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import {
@@ -35,17 +35,11 @@ export default function ExperimentDetail({ experimentId }: ExperimentDetailProps
   const [stats, setStats] = useState<ExperimentStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [statsLoading, setStatsLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
-  const [exporting, setExporting] = useState(false);
-  const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
   const [actionDialog, setActionDialog] = useState<{
     type: "start" | "pause" | "archive" | null;
   }>({ type: null });
   const [actionLoading, setActionLoading] = useState(false);
   const [copied, setCopied] = useState(false);
-
-  const autoRefreshRef = useRef<NodeJS.Timeout | null>(null);
-  const AUTO_REFRESH_INTERVAL = 30 * 1000;
 
   const fetchExperiment = async () => {
     setLoading(true);
@@ -62,101 +56,25 @@ export default function ExperimentDetail({ experimentId }: ExperimentDetailProps
     }
   };
 
-  const fetchStats = useCallback(async (showLoading = false) => {
-    if (showLoading) setStatsLoading(true);
-    setRefreshing(true);
+  const fetchStats = async () => {
+    setStatsLoading(true);
     try {
-      const response = await fetch(`/api/experiments/${experimentId}/stats`, {
-        cache: "no-store",
-        headers: { "Cache-Control": "no-cache" },
-      });
+      const response = await fetch(`/api/experiments/${experimentId}/stats`);
       const data = await response.json();
       if (response.ok) {
         setStats(data);
-        setLastUpdated(new Date());
       }
     } catch (error) {
       console.error("Failed to fetch stats:", error);
     } finally {
       setStatsLoading(false);
-      setRefreshing(false);
     }
-  }, [experimentId]);
+  };
 
   useEffect(() => {
     fetchExperiment();
-    fetchStats(true);
-  }, [experimentId, fetchStats]);
-
-  useEffect(() => {
-    const startAutoRefresh = () => {
-      stopAutoRefresh();
-      autoRefreshRef.current = setInterval(() => {
-        fetchStats(false);
-      }, AUTO_REFRESH_INTERVAL);
-    };
-
-    const stopAutoRefresh = () => {
-      if (autoRefreshRef.current) {
-        clearInterval(autoRefreshRef.current);
-        autoRefreshRef.current = null;
-      }
-    };
-
-    startAutoRefresh();
-
-    const handleVisibility = () => {
-      if (document.visibilityState === "visible") {
-        fetchStats(false);
-        startAutoRefresh();
-      } else {
-        stopAutoRefresh();
-      }
-    };
-
-    document.addEventListener("visibilitychange", handleVisibility);
-
-    return () => {
-      stopAutoRefresh();
-      document.removeEventListener("visibilitychange", handleVisibility);
-    };
-  }, [fetchStats]);
-
-  const handleRefresh = () => {
-    fetchStats(false);
-  };
-
-  const handleExportCSV = async () => {
-    setExporting(true);
-    try {
-      const response = await fetch(`/api/experiments/${experimentId}/export`, {
-        cache: "no-store",
-      });
-      if (!response.ok) {
-        throw new Error("导出失败");
-      }
-      const blob = await response.blob();
-      const contentDisposition = response.headers.get("Content-Disposition");
-      let filename = `experiment-events-${Date.now()}.csv`;
-      if (contentDisposition) {
-        const match = contentDisposition.match(/filename="?([^"]+)"?/);
-        if (match && match[1]) filename = match[1];
-      }
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = filename;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      window.URL.revokeObjectURL(url);
-    } catch (error) {
-      console.error("Export failed:", error);
-      alert("导出 CSV 失败，请稍后重试");
-    } finally {
-      setExporting(false);
-    }
-  };
+    fetchStats();
+  }, [experimentId]);
 
   const handleStatusChange = async (status: string) => {
     setActionLoading(true);
@@ -170,7 +88,7 @@ export default function ExperimentDetail({ experimentId }: ExperimentDetailProps
       if (response.ok) {
         setActionDialog({ type: null });
         fetchExperiment();
-        fetchStats(false);
+        fetchStats();
       }
     } catch (error) {
       console.error("Failed to update status:", error);
@@ -348,17 +266,7 @@ export default function ExperimentDetail({ experimentId }: ExperimentDetailProps
         </CardContent>
       </Card>
 
-      {stats && (
-        <ExperimentStatsChart
-          stats={stats}
-          loading={statsLoading}
-          refreshing={refreshing}
-          exporting={exporting}
-          lastUpdated={lastUpdated}
-          onRefresh={handleRefresh}
-          onExportCSV={handleExportCSV}
-        />
-      )}
+      {stats && <ExperimentStatsChart stats={stats} loading={statsLoading} />}
 
       <Dialog
         open={!!actionDialog.type}

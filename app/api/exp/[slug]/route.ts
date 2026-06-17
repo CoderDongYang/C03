@@ -61,16 +61,10 @@ export async function GET(
     }
 
     if (experiment.status !== "RUNNING") {
-      const statusMessages: Record<string, string> = {
-        DRAFT: "实验尚未启动",
-        PAUSED: "实验已暂停",
-        ARCHIVED: "实验已归档",
-      };
-      const message = statusMessages[experiment.status] || "实验已结束";
-      return NextResponse.json(
-        { error: message, status: experiment.status },
-        { status: 400 }
-      );
+      return NextResponse.json({
+        error: experiment.status === "PAUSED" ? "实验已暂停" : "实验已结束",
+        status: experiment.status,
+      });
     }
 
     const weights = experiment.versions.map((v) => ({

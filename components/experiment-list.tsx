@@ -12,6 +12,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import {
   Dialog,
   DialogContent,
@@ -26,17 +27,18 @@ import { StatusBadge } from "@/components/status-badge";
 import { formatDate } from "@/lib/utils";
 import { Experiment } from "@/types";
 
-export default function ExperimentList() {
+export default function DashboardPage() {
   const router = useRouter();
   const [experiments, setExperiments] = useState<Experiment[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [includeArchived, setIncludeArchived] = useState(false);
-  const [archivedCount, setArchivedCount] = useState(0);
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
 
   const fetchExperiments = async () => {
     setLoading(true);
+    setError(null);
     try {
       const response = await fetch(
         `/api/experiments?includeArchived=${includeArchived}`
@@ -44,10 +46,12 @@ export default function ExperimentList() {
       const data = await response.json();
       if (response.ok) {
         setExperiments(data.experiments);
-        setArchivedCount(data.archivedCount || 0);
+      } else {
+        setError(data.error || "获取实验列表失败");
       }
-    } catch (error) {
-      console.error("Failed to fetch experiments:", error);
+    } catch (err) {
+      console.error("Failed to fetch experiments:", err);
+      setError("网络错误，请稍后重试");
     } finally {
       setLoading(false);
     }
@@ -95,37 +99,25 @@ export default function ExperimentList() {
           onCheckedChange={setIncludeArchived}
         />
         <Label className="cursor-pointer" onClick={() => setIncludeArchived(!includeArchived)}>
-          显示已归档{archivedCount > 0 ? ` (${archivedCount})` : ""}
+          显示已归档
         </Label>
       </div>
+
+      {error && (
+        <Alert variant="destructive">
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
+      )}
 
       {loading ? (
         <div className="text-center py-12 text-muted-foreground">加载中...</div>
       ) : experiments.length === 0 ? (
         <Card>
           <CardContent className="text-center py-12">
-            {archivedCount > 0 ? (
-              <>
-                <p className="text-muted-foreground mb-4">
-                  当前没有活跃的实验，有 {archivedCount} 个实验已归档
-                </p>
-                <div className="flex gap-3 justify-center">
-                  <Button onClick={() => router.push("/experiments/new")}>
-                    创建新实验
-                  </Button>
-                  <Button variant="outline" onClick={() => setIncludeArchived(true)}>
-                    查看已归档
-                  </Button>
-                </div>
-              </>
-            ) : (
-              <>
-                <p className="text-muted-foreground mb-4">暂无实验</p>
-                <Button onClick={() => router.push("/experiments/new")}>
-                  创建第一个实验
-                </Button>
-              </>
-            )}
+            <p className="text-muted-foreground mb-4">暂无实验</p>
+            <Button onClick={() => router.push("/experiments/new")}>
+              创建第一个实验
+            </Button>
           </CardContent>
         </Card>
       ) : (

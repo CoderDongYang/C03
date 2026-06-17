@@ -107,35 +107,27 @@ export async function GET(req: Request) {
     const { searchParams } = new URL(req.url);
     const includeArchived = searchParams.get("includeArchived") === "true";
 
-    const [experiments, archivedCount] = await Promise.all([
-      prisma.experiment.findMany({
-        where: {
-          userId: session.user.id,
-          ...(includeArchived ? {} : { status: { not: "ARCHIVED" } }),
-        },
-        include: {
-          versions: {
-            select: {
-              id: true,
-              name: true,
-              weight: true,
-              isControl: true,
-            },
+    const experiments = await prisma.experiment.findMany({
+      where: {
+        userId: session.user.id,
+        ...(includeArchived ? {} : { status: { not: "ARCHIVED" } }),
+      },
+      include: {
+        versions: {
+          select: {
+            id: true,
+            name: true,
+            weight: true,
+            isControl: true,
           },
         },
-        orderBy: {
-          createdAt: "desc",
-        },
-      }),
-      prisma.experiment.count({
-        where: {
-          userId: session.user.id,
-          status: "ARCHIVED",
-        },
-      }),
-    ]);
+      },
+      orderBy: {
+        createdAt: "desc",
+      },
+    });
 
-    return NextResponse.json({ experiments, archivedCount });
+    return NextResponse.json({ experiments });
   } catch (error) {
     console.error(error);
     return NextResponse.json(

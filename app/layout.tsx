@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
-import Providers from "./providers";
+import { AuthProvider } from "@/components/auth-provider";
 
 export const metadata: Metadata = {
   title: "A/B 测试平台",
@@ -15,7 +15,7 @@ export default function RootLayout({
   return (
     <html lang="zh-CN">
       <body>
-        <Providers>{children}</Providers>
+        <AuthProvider>{children}</AuthProvider>
       </body>
     </html>
   );
