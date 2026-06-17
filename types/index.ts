@@ -34,6 +34,11 @@ export interface VersionStats {
   conversions: number;
   conversionRate: number;
   lift: number;
+  liftPercent: number;
+  ciLower: number;
+  ciUpper: number;
+  pValue: number | null;
+  isSignificant: boolean;
   allConversions: Record<string, number>;
 }
 
