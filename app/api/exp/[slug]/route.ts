@@ -33,6 +33,13 @@ export async function GET(
       );
     }
 
+    if (experiment.status === "ARCHIVED") {
+      return NextResponse.json(
+        { error: "实验已归档", status: "ARCHIVED" },
+        { status: 400 }
+      );
+    }
+
     if (previewVersionId) {
       const version = experiment.versions.find(
         (v) => v.id === previewVersionId
@@ -60,10 +67,23 @@ export async function GET(
       });
     }
 
-    if (experiment.status !== "RUNNING") {
+    if (experiment.status === "DRAFT" || experiment.status === "PAUSED") {
+      const controlVersion = experiment.versions.find((v) => v.isControl);
+      const version = controlVersion || experiment.versions[0];
       return NextResponse.json({
-        error: experiment.status === "PAUSED" ? "实验已暂停" : "实验已结束",
-        status: experiment.status,
+        experiment: {
+          id: experiment.id,
+          name: experiment.name,
+          status: experiment.status,
+          targetEvent: experiment.targetEvent,
+        },
+        version: {
+          id: version.id,
+          name: version.name,
+          code: version.code,
+          isControl: version.isControl,
+        },
+        isPreview: true,
       });
     }
 

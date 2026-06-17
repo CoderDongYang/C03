@@ -123,7 +123,17 @@ export default function ExperimentPageClient({ slug }: { slug: string }) {
 
   return (
     <div className="min-h-screen bg-white">
-      {data?.isPreview && (
+      {data?.isPreview && data.experiment.status === "DRAFT" && (
+        <div className="bg-blue-50 border-b border-blue-200 py-2 px-4 text-center text-sm text-blue-800">
+          草稿状态 - {data.version.name}{data.version.isControl ? " (对照组)" : ""} - 不上报数据，启动实验后可正式使用
+        </div>
+      )}
+      {data?.isPreview && data.experiment.status === "PAUSED" && (
+        <div className="bg-yellow-50 border-b border-yellow-200 py-2 px-4 text-center text-sm text-yellow-800">
+          实验已暂停 - {data.version.name}{data.version.isControl ? " (对照组)" : ""} - 不上报数据
+        </div>
+      )}
+      {data?.isPreview && data.experiment.status === "RUNNING" && (
         <div className="bg-yellow-50 border-b border-yellow-200 py-2 px-4 text-center text-sm text-yellow-800">
           预览模式 - {data.version.name}{data.version.isControl ? " (对照组)" : ""} - 不上报数据
         </div>

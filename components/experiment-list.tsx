@@ -13,7 +13,7 @@ import { Experiment } from "@/types";
 
 export default function ExperimentList() {
   const router = useRouter();
-  const [experiments, setExperiments] = useState<Experiment[]>([]);
+  const [allExperiments, setAllExperiments] = useState<Experiment[]>([]);
   const [loading, setLoading] = useState(true);
   const [includeArchived, setIncludeArchived] = useState(false);
   const [deleteId, setDeleteId] = useState<string | null>(null);
@@ -22,10 +22,10 @@ export default function ExperimentList() {
   const fetchExperiments = async () => {
     setLoading(true);
     try {
-      const response = await fetch(`/api/experiments?includeArchived=${includeArchived}`);
+      const response = await fetch(`/api/experiments?includeArchived=true`);
       const data = await response.json();
       if (response.ok) {
-        setExperiments(data.experiments);
+        setAllExperiments(data.experiments);
       }
     } catch (error) {
       console.error("Failed to fetch experiments:", error);
@@ -36,7 +36,13 @@ export default function ExperimentList() {
 
   useEffect(() => {
     fetchExperiments();
-  }, [includeArchived]);
+  }, []);
+
+  const experiments = includeArchived
+    ? allExperiments
+    : allExperiments.filter((e) => e.status !== "ARCHIVED");
+
+  const hasArchived = allExperiments.some((e) => e.status === "ARCHIVED");
 
   const handleDelete = async () => {
     if (!deleteId) return;
@@ -44,7 +50,7 @@ export default function ExperimentList() {
     try {
       const response = await fetch(`/api/experiments/${deleteId}`, { method: "DELETE" });
       if (response.ok) {
-        setExperiments((prev) => prev.filter((e) => e.id !== deleteId));
+        setAllExperiments((prev) => prev.filter((e) => e.id !== deleteId));
         setDeleteId(null);
       }
     } catch (error) {
@@ -74,8 +80,18 @@ export default function ExperimentList() {
       ) : experiments.length === 0 ? (
         <Card>
           <CardContent className="text-center py-12">
-            <p className="text-muted-foreground mb-4">暂无实验</p>
-            <Button onClick={() => router.push("/experiments/new")}>创建第一个实验</Button>
+            {hasArchived && !includeArchived ? (
+              <>
+                <p className="text-muted-foreground mb-4">暂无进行中的实验</p>
+                <p className="text-sm text-muted-foreground mb-4">您有已归档的实验，可开启上方"显示已归档"开关查看</p>
+                <Button onClick={() => setIncludeArchived(true)}>显示已归档实验</Button>
+              </>
+            ) : (
+              <>
+                <p className="text-muted-foreground mb-4">暂无实验</p>
+                <Button onClick={() => router.push("/experiments/new")}>创建第一个实验</Button>
+              </>
+            )}
           </CardContent>
         </Card>
       ) : (
